@@ -1,0 +1,889 @@
+{
+  "doctor": {
+    "protocol_version": 1,
+    "pcw_version": "0.2.0.dev0",
+    "command": "doctor",
+    "ok": true,
+    "result": {
+      "version": "0.2.0.dev0",
+      "python": "3.11.5",
+      "platform": "fixture-platform",
+      "packages": {
+        "PyYAML": "6.0.3",
+        "numpy": "2.4.6",
+        "plyfile": "1.1.5",
+        "torch": "2.13.0",
+        "safetensors": "0.7.0",
+        "warpconvnet": null
+      },
+      "capabilities": {
+        "config_validation": true,
+        "dataset_preparation": true,
+        "prepared_dataset_validation": true,
+        "ml_pipeline": true,
+        "gpu_runtime": "not_checked"
+      }
+    },
+    "error": null
+  },
+  "config_validate": {
+    "protocol_version": 1,
+    "pcw_version": "0.2.0.dev0",
+    "command": "config validate",
+    "ok": true,
+    "result": {
+      "schema_version": 1,
+      "paths": {
+        "input_dir": "/fixture/pcw/raw",
+        "output_dir": "/fixture/pcw/output"
+      },
+      "runtime": {
+        "seed": 0,
+        "num_workers": 0
+      }
+    },
+    "error": null
+  },
+  "synthetic": {
+    "protocol_version": 1,
+    "pcw_version": "0.2.0.dev0",
+    "command": "synthetic",
+    "ok": true,
+    "result": {
+      "manifest": "/fixture/pcw/raw/manifest.json",
+      "seed": 42
+    },
+    "error": null
+  },
+  "inspect_raw": {
+    "protocol_version": 1,
+    "pcw_version": "0.2.0.dev0",
+    "command": "inspect",
+    "ok": true,
+    "result": {
+      "schema_version": 1,
+      "kind": "rptu-raw-dataset",
+      "coordinate_unit": "m",
+      "feature_names": [
+        "intensity"
+      ],
+      "label_mapping": [
+        {
+          "dataset_id": 0,
+          "train_id": 0,
+          "name": "floor"
+        },
+        {
+          "dataset_id": 7,
+          "train_id": 1,
+          "name": "wall"
+        },
+        {
+          "dataset_id": 42,
+          "train_id": 2,
+          "name": "object"
+        }
+      ],
+      "ignore_label": -1,
+      "scenes": [
+        {
+          "id": "train-000",
+          "split": "train",
+          "points": 45,
+          "valid_points": 42,
+          "invalid_points": 3,
+          "labeled": true,
+          "label_counts": {
+            "-1": 2,
+            "0": 16,
+            "7": 14,
+            "42": 13
+          },
+          "sha256": "ac32f2f8ddf0bf189f2c28fd56b41ac31c64997618e8227ea9d359931e695731"
+        },
+        {
+          "id": "val-000",
+          "split": "val",
+          "points": 45,
+          "valid_points": 42,
+          "invalid_points": 3,
+          "labeled": true,
+          "label_counts": {
+            "-1": 2,
+            "0": 16,
+            "7": 14,
+            "42": 13
+          },
+          "sha256": "470292f4e50a5e23cd1c046155c0619d4db6724e2557211f1c1e13d2ac4149fc"
+        },
+        {
+          "id": "test-000",
+          "split": "test",
+          "points": 45,
+          "valid_points": 42,
+          "invalid_points": 3,
+          "labeled": true,
+          "label_counts": {
+            "-1": 2,
+            "0": 16,
+            "7": 14,
+            "42": 13
+          },
+          "sha256": "7ae39f296cceac95d3b5d237e674f38380a4fc9d408a5152ee2c43db8c6c03ce"
+        },
+        {
+          "id": "predict-000",
+          "split": "predict",
+          "points": 45,
+          "valid_points": 42,
+          "invalid_points": 3,
+          "labeled": false,
+          "label_counts": null,
+          "sha256": "e488b46b2e4dbe8ab65725d36134a60da578451cf85f9f4db5b86d192caf0071"
+        }
+      ],
+      "total_points": 180,
+      "total_invalid_points": 12
+    },
+    "error": null
+  },
+  "preprocess": {
+    "protocol_version": 1,
+    "pcw_version": "0.2.0.dev0",
+    "command": "preprocess",
+    "ok": true,
+    "result": {
+      "schema_version": 1,
+      "kind": "rptu-prepared-dataset",
+      "source_manifest_sha256": "6e4edde370889aabb9c523cc005695d8f97019bedd2cad8204c979891a867b0f",
+      "coordinate_unit": "m",
+      "feature_names": [
+        "intensity"
+      ],
+      "label_mapping": [
+        {
+          "dataset_id": 0,
+          "train_id": 0,
+          "name": "floor"
+        },
+        {
+          "dataset_id": 7,
+          "train_id": 1,
+          "name": "wall"
+        },
+        {
+          "dataset_id": 42,
+          "train_id": 2,
+          "name": "object"
+        }
+      ],
+      "ignore_label": -1,
+      "training_ignore_label": -1,
+      "voxel_size": 0.25,
+      "quantization": "floor",
+      "feature_reduction": "mean",
+      "label_reduction": "majority_nonignored_then_smallest_train_id",
+      "scenes": [
+        {
+          "id": "train-000",
+          "split": "train",
+          "path": "scenes/train-000.npz",
+          "sha256": "e49699b220e48f582ec6ced64dcd69d81822ad3794d595c183895b852c0e67cd",
+          "source_sha256": "ac32f2f8ddf0bf189f2c28fd56b41ac31c64997618e8227ea9d359931e695731",
+          "input_points": 45,
+          "valid_points": 42,
+          "voxel_count": 35,
+          "labeled": true
+        },
+        {
+          "id": "val-000",
+          "split": "val",
+          "path": "scenes/val-000.npz",
+          "sha256": "a40d8c2818d514e838289dbb40aa89dd9c2c2390fbaec43ff2975d4a3cc1bedf",
+          "source_sha256": "470292f4e50a5e23cd1c046155c0619d4db6724e2557211f1c1e13d2ac4149fc",
+          "input_points": 45,
+          "valid_points": 42,
+          "voxel_count": 38,
+          "labeled": true
+        },
+        {
+          "id": "test-000",
+          "split": "test",
+          "path": "scenes/test-000.npz",
+          "sha256": "e2f2a522d517dd5484e4c2074ee9c32ca3f220525250288dcfcf73032b188833",
+          "source_sha256": "7ae39f296cceac95d3b5d237e674f38380a4fc9d408a5152ee2c43db8c6c03ce",
+          "input_points": 45,
+          "valid_points": 42,
+          "voxel_count": 37,
+          "labeled": true
+        },
+        {
+          "id": "predict-000",
+          "split": "predict",
+          "path": "scenes/predict-000.npz",
+          "sha256": "98ae2dc06dd7954ec3c7bc1efcf44b0f9f3ec1d1762333794a25f5c7f7059081",
+          "source_sha256": "e488b46b2e4dbe8ab65725d36134a60da578451cf85f9f4db5b86d192caf0071",
+          "input_points": 45,
+          "valid_points": 42,
+          "voxel_count": 37,
+          "labeled": false
+        }
+      ]
+    },
+    "error": null
+  },
+  "inspect_prepared": {
+    "protocol_version": 1,
+    "pcw_version": "0.2.0.dev0",
+    "command": "inspect",
+    "ok": true,
+    "result": {
+      "schema_version": 1,
+      "kind": "rptu-prepared-dataset",
+      "coordinate_unit": "m",
+      "feature_names": [
+        "intensity"
+      ],
+      "label_mapping": [
+        {
+          "dataset_id": 0,
+          "train_id": 0,
+          "name": "floor"
+        },
+        {
+          "dataset_id": 7,
+          "train_id": 1,
+          "name": "wall"
+        },
+        {
+          "dataset_id": 42,
+          "train_id": 2,
+          "name": "object"
+        }
+      ],
+      "ignore_label": -1,
+      "training_ignore_label": -1,
+      "voxel_size": 0.25,
+      "source_manifest_sha256": "6e4edde370889aabb9c523cc005695d8f97019bedd2cad8204c979891a867b0f",
+      "scenes": [
+        {
+          "id": "train-000",
+          "split": "train",
+          "input_points": 45,
+          "valid_points": 42,
+          "invalid_points": 3,
+          "voxel_count": 35,
+          "labeled": true,
+          "point_label_counts": {
+            "-1": 2,
+            "0": 16,
+            "1": 14,
+            "2": 13
+          },
+          "voxel_label_counts": {
+            "-1": 1,
+            "0": 15,
+            "1": 11,
+            "2": 8
+          },
+          "sha256": "e49699b220e48f582ec6ced64dcd69d81822ad3794d595c183895b852c0e67cd"
+        },
+        {
+          "id": "val-000",
+          "split": "val",
+          "input_points": 45,
+          "valid_points": 42,
+          "invalid_points": 3,
+          "voxel_count": 38,
+          "labeled": true,
+          "point_label_counts": {
+            "-1": 2,
+            "0": 16,
+            "1": 14,
+            "2": 13
+          },
+          "voxel_label_counts": {
+            "-1": 1,
+            "0": 15,
+            "1": 11,
+            "2": 11
+          },
+          "sha256": "a40d8c2818d514e838289dbb40aa89dd9c2c2390fbaec43ff2975d4a3cc1bedf"
+        },
+        {
+          "id": "test-000",
+          "split": "test",
+          "input_points": 45,
+          "valid_points": 42,
+          "invalid_points": 3,
+          "voxel_count": 37,
+          "labeled": true,
+          "point_label_counts": {
+            "-1": 2,
+            "0": 16,
+            "1": 14,
+            "2": 13
+          },
+          "voxel_label_counts": {
+            "-1": 1,
+            "0": 13,
+            "1": 12,
+            "2": 11
+          },
+          "sha256": "e2f2a522d517dd5484e4c2074ee9c32ca3f220525250288dcfcf73032b188833"
+        },
+        {
+          "id": "predict-000",
+          "split": "predict",
+          "input_points": 45,
+          "valid_points": 42,
+          "invalid_points": 3,
+          "voxel_count": 37,
+          "labeled": false,
+          "point_label_counts": null,
+          "voxel_label_counts": null,
+          "sha256": "98ae2dc06dd7954ec3c7bc1efcf44b0f9f3ec1d1762333794a25f5c7f7059081"
+        }
+      ],
+      "total_input_points": 180,
+      "total_valid_points": 168,
+      "total_invalid_points": 12,
+      "total_voxels": 147
+    },
+    "error": null
+  },
+  "train": {
+    "protocol_version": 1,
+    "pcw_version": "0.2.0.dev0",
+    "command": "train",
+    "ok": true,
+    "result": {
+      "schema_version": 1,
+      "kind": "rptu-training-report",
+      "backend": "torch",
+      "device": "cpu",
+      "architecture": "feature-mlp-64-64-v1",
+      "epochs": [
+        {
+          "epoch": 1,
+          "loss": 1.0693726539611816
+        }
+      ],
+      "train": {
+        "total_points": 45,
+        "valid_points": 42,
+        "scored_points": 40,
+        "excluded_points": 5,
+        "confusion_matrix": [
+          [
+            15,
+            0,
+            0
+          ],
+          [
+            10,
+            0,
+            3
+          ],
+          [
+            11,
+            0,
+            1
+          ]
+        ],
+        "confusion_axes": {
+          "rows": "target_train_id",
+          "columns": "predicted_train_id"
+        },
+        "classes": [
+          {
+            "dataset_id": 0,
+            "train_id": 0,
+            "name": "floor",
+            "iou": 0.4166666666666667
+          },
+          {
+            "dataset_id": 7,
+            "train_id": 1,
+            "name": "wall",
+            "iou": 0.0
+          },
+          {
+            "dataset_id": 42,
+            "train_id": 2,
+            "name": "object",
+            "iou": 0.06666666666666667
+          }
+        ],
+        "accuracy": 0.4,
+        "mean_iou": 0.16111111111111112
+      },
+      "val": {
+        "total_points": 45,
+        "valid_points": 42,
+        "scored_points": 40,
+        "excluded_points": 5,
+        "confusion_matrix": [
+          [
+            13,
+            0,
+            2
+          ],
+          [
+            11,
+            0,
+            2
+          ],
+          [
+            11,
+            0,
+            1
+          ]
+        ],
+        "confusion_axes": {
+          "rows": "target_train_id",
+          "columns": "predicted_train_id"
+        },
+        "classes": [
+          {
+            "dataset_id": 0,
+            "train_id": 0,
+            "name": "floor",
+            "iou": 0.35135135135135137
+          },
+          {
+            "dataset_id": 7,
+            "train_id": 1,
+            "name": "wall",
+            "iou": 0.0
+          },
+          {
+            "dataset_id": 42,
+            "train_id": 2,
+            "name": "object",
+            "iou": 0.0625
+          }
+        ],
+        "accuracy": 0.35,
+        "mean_iou": 0.13795045045045046
+      }
+    },
+    "error": null
+  },
+  "run_inspect_completed": {
+    "protocol_version": 1,
+    "pcw_version": "0.2.0.dev0",
+    "command": "run inspect",
+    "ok": true,
+    "result": {
+      "schema_version": 1,
+      "kind": "pcw-run-inspection",
+      "run_id": "8088ece64588449d99b13c253afade15",
+      "output": "/fixture/pcw/model",
+      "state": "completed",
+      "spec": {
+        "architecture": "feature-mlp-64-64-v1",
+        "backend": "torch",
+        "contract": {
+          "coordinate_unit": "m",
+          "feature_names": [
+            "intensity"
+          ],
+          "feature_reduction": "mean",
+          "ignore_label": -1,
+          "label_mapping": [
+            {
+              "dataset_id": 0,
+              "name": "floor",
+              "train_id": 0
+            },
+            {
+              "dataset_id": 7,
+              "name": "wall",
+              "train_id": 1
+            },
+            {
+              "dataset_id": 42,
+              "name": "object",
+              "train_id": 2
+            }
+          ],
+          "label_reduction": "majority_nonignored_then_smallest_train_id",
+          "quantization": "floor",
+          "training_ignore_label": -1,
+          "voxel_size": 0.25
+        },
+        "input_channels": 1,
+        "kind": "rptu-training-specification",
+        "normalization": {
+          "kind": "training-voxel-zscore-v1",
+          "mean": [
+            0.4629793061886533
+          ],
+          "scale": [
+            0.27468109776355254
+          ]
+        },
+        "num_classes": 3,
+        "optimizer": "Adam",
+        "optimizer_steps_per_epoch": 1,
+        "runtime": {
+          "cuda_version": null,
+          "device": "cpu",
+          "toolkit_version": "0.2.0.dev0",
+          "torch_version": "2.13.0",
+          "warpconvnet_version": null
+        },
+        "schema_version": 1,
+        "torch_threads": 1,
+        "training": {
+          "epochs": 1,
+          "learning_rate": 0.001,
+          "max_voxels": 100000,
+          "prepared_sha256": "8c2f07396ac296d38d1dac5db5d4e62f443b807030f51875cc83ec780c4a7f43",
+          "seed": 42,
+          "train_scene_ids": [
+            "train-000"
+          ]
+        }
+      },
+      "completion": {
+        "attempt_id": "886880ebb0144f018e903c58d0cad75b",
+        "completed_at": "2026-10-15T18:40:26.221447+00:00",
+        "files": {
+          "bundle.json": "af7da45169d6406836fefa00faf9466f3ed60c8911267d79311789c62d56bf5f",
+          "training.json": "70acb1bac0b8242af887447f0ba11ade0a0c20ad6fa1eb0b9916a2dec87434f2",
+          "weights.safetensors": "0c2eed61aee320c4c8f90e9e980aa00663699678a4f6e9ac899fd5a7f609de56"
+        },
+        "kind": "rptu-training-completion",
+        "run_id": "8088ece64588449d99b13c253afade15",
+        "schema_version": 1,
+        "summary": {
+          "epochs": 1
+        }
+      }
+    },
+    "error": null
+  },
+  "resume": {
+    "protocol_version": 1,
+    "pcw_version": "0.2.0.dev0",
+    "command": "train",
+    "ok": true,
+    "result": {
+      "architecture": "feature-mlp-64-64-v1",
+      "backend": "torch",
+      "device": "cpu",
+      "epochs": [
+        {
+          "epoch": 1,
+          "loss": 1.0693726539611816
+        }
+      ],
+      "kind": "rptu-training-report",
+      "schema_version": 1,
+      "train": {
+        "accuracy": 0.4,
+        "classes": [
+          {
+            "dataset_id": 0,
+            "iou": 0.4166666666666667,
+            "name": "floor",
+            "train_id": 0
+          },
+          {
+            "dataset_id": 7,
+            "iou": 0.0,
+            "name": "wall",
+            "train_id": 1
+          },
+          {
+            "dataset_id": 42,
+            "iou": 0.06666666666666667,
+            "name": "object",
+            "train_id": 2
+          }
+        ],
+        "confusion_axes": {
+          "columns": "predicted_train_id",
+          "rows": "target_train_id"
+        },
+        "confusion_matrix": [
+          [
+            15,
+            0,
+            0
+          ],
+          [
+            10,
+            0,
+            3
+          ],
+          [
+            11,
+            0,
+            1
+          ]
+        ],
+        "excluded_points": 5,
+        "mean_iou": 0.16111111111111112,
+        "scored_points": 40,
+        "total_points": 45,
+        "valid_points": 42
+      },
+      "val": {
+        "accuracy": 0.35,
+        "classes": [
+          {
+            "dataset_id": 0,
+            "iou": 0.35135135135135137,
+            "name": "floor",
+            "train_id": 0
+          },
+          {
+            "dataset_id": 7,
+            "iou": 0.0,
+            "name": "wall",
+            "train_id": 1
+          },
+          {
+            "dataset_id": 42,
+            "iou": 0.0625,
+            "name": "object",
+            "train_id": 2
+          }
+        ],
+        "confusion_axes": {
+          "columns": "predicted_train_id",
+          "rows": "target_train_id"
+        },
+        "confusion_matrix": [
+          [
+            13,
+            0,
+            2
+          ],
+          [
+            11,
+            0,
+            2
+          ],
+          [
+            11,
+            0,
+            1
+          ]
+        ],
+        "excluded_points": 5,
+        "mean_iou": 0.13795045045045046,
+        "scored_points": 40,
+        "total_points": 45,
+        "valid_points": 42
+      }
+    },
+    "error": null
+  },
+  "evaluate": {
+    "protocol_version": 1,
+    "pcw_version": "0.2.0.dev0",
+    "command": "evaluate",
+    "ok": true,
+    "result": {
+      "schema_version": 1,
+      "kind": "rptu-evaluation",
+      "prepared_sha256": "8c2f07396ac296d38d1dac5db5d4e62f443b807030f51875cc83ec780c4a7f43",
+      "model_bundle_sha256": "af7da45169d6406836fefa00faf9466f3ed60c8911267d79311789c62d56bf5f",
+      "model_weights_sha256": "0c2eed61aee320c4c8f90e9e980aa00663699678a4f6e9ac899fd5a7f609de56",
+      "split": "test",
+      "backend": "torch",
+      "architecture": "feature-mlp-64-64-v1",
+      "device": "cpu",
+      "contract": {
+        "coordinate_unit": "m",
+        "feature_names": [
+          "intensity"
+        ],
+        "voxel_size": 0.25,
+        "label_mapping": [
+          {
+            "dataset_id": 0,
+            "train_id": 0,
+            "name": "floor"
+          },
+          {
+            "dataset_id": 7,
+            "train_id": 1,
+            "name": "wall"
+          },
+          {
+            "dataset_id": 42,
+            "train_id": 2,
+            "name": "object"
+          }
+        ],
+        "ignore_label": -1,
+        "training_ignore_label": -1,
+        "quantization": "floor",
+        "feature_reduction": "mean",
+        "label_reduction": "majority_nonignored_then_smallest_train_id"
+      },
+      "scenes": [
+        {
+          "id": "test-000",
+          "path": "scenes/test-000.npz",
+          "sha256": "ff488df0922d072047b555d14eca43368ea9bd76af870f0812b794655ffcb3f8",
+          "input_points": 45,
+          "valid_points": 42,
+          "source_sha256": "e2f2a522d517dd5484e4c2074ee9c32ca3f220525250288dcfcf73032b188833"
+        }
+      ],
+      "metrics": {
+        "total_points": 45,
+        "valid_points": 42,
+        "scored_points": 40,
+        "excluded_points": 5,
+        "confusion_matrix": [
+          [
+            12,
+            0,
+            3
+          ],
+          [
+            12,
+            0,
+            1
+          ],
+          [
+            10,
+            0,
+            2
+          ]
+        ],
+        "confusion_axes": {
+          "rows": "target_train_id",
+          "columns": "predicted_train_id"
+        },
+        "classes": [
+          {
+            "dataset_id": 0,
+            "train_id": 0,
+            "name": "floor",
+            "iou": 0.32432432432432434
+          },
+          {
+            "dataset_id": 7,
+            "train_id": 1,
+            "name": "wall",
+            "iou": 0.0
+          },
+          {
+            "dataset_id": 42,
+            "train_id": 2,
+            "name": "object",
+            "iou": 0.125
+          }
+        ],
+        "accuracy": 0.35,
+        "mean_iou": 0.14977477477477477
+      }
+    },
+    "error": null
+  },
+  "predict": {
+    "protocol_version": 1,
+    "pcw_version": "0.2.0.dev0",
+    "command": "predict",
+    "ok": true,
+    "result": {
+      "schema_version": 1,
+      "kind": "rptu-predictions",
+      "prepared_sha256": "8c2f07396ac296d38d1dac5db5d4e62f443b807030f51875cc83ec780c4a7f43",
+      "model_bundle_sha256": "af7da45169d6406836fefa00faf9466f3ed60c8911267d79311789c62d56bf5f",
+      "model_weights_sha256": "0c2eed61aee320c4c8f90e9e980aa00663699678a4f6e9ac899fd5a7f609de56",
+      "split": "predict",
+      "backend": "torch",
+      "architecture": "feature-mlp-64-64-v1",
+      "device": "cpu",
+      "contract": {
+        "coordinate_unit": "m",
+        "feature_names": [
+          "intensity"
+        ],
+        "voxel_size": 0.25,
+        "label_mapping": [
+          {
+            "dataset_id": 0,
+            "train_id": 0,
+            "name": "floor"
+          },
+          {
+            "dataset_id": 7,
+            "train_id": 1,
+            "name": "wall"
+          },
+          {
+            "dataset_id": 42,
+            "train_id": 2,
+            "name": "object"
+          }
+        ],
+        "ignore_label": -1,
+        "training_ignore_label": -1,
+        "quantization": "floor",
+        "feature_reduction": "mean",
+        "label_reduction": "majority_nonignored_then_smallest_train_id"
+      },
+      "scenes": [
+        {
+          "id": "predict-000",
+          "path": "scenes/predict-000.npz",
+          "sha256": "99bf8b332d02d865ff963de01e0b68d16aa83aca7f0c2d261556f9a628954703",
+          "input_points": 45,
+          "valid_points": 42,
+          "source_sha256": "98ae2dc06dd7954ec3c7bc1efcf44b0f9f3ec1d1762333794a25f5c7f7059081"
+        }
+      ]
+    },
+    "error": null
+  },
+  "usage_error": {
+    "protocol_version": 1,
+    "pcw_version": "0.2.0.dev0",
+    "command": "preprocess",
+    "ok": false,
+    "result": null,
+    "error": {
+      "code": "usage_error",
+      "message": "the following arguments are required: --manifest, --output, --voxel-size"
+    }
+  },
+  "data_error": {
+    "protocol_version": 1,
+    "pcw_version": "0.2.0.dev0",
+    "command": "inspect",
+    "ok": false,
+    "result": null,
+    "error": {
+      "code": "data_error",
+      "message": "missing.json: cannot read dataset manifest: [Errno 2] No such file or directory: '/fixture/pcw/missing.json'"
+    }
+  },
+  "run_inspect_incomplete": {
+    "protocol_version": 1,
+    "pcw_version": "0.2.0.dev0",
+    "command": "run inspect",
+    "ok": true,
+    "result": {
+      "schema_version": 1,
+      "kind": "pcw-run-inspection",
+      "run_id": "a4e326811d1c42068e1eecd23659007c",
+      "output": "/fixture/pcw/incomplete",
+      "state": "incomplete",
+      "spec": {
+        "epochs": 2
+      },
+      "completion": null
+    },
+    "error": null
+  }
+}

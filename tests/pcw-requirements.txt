@@ -1,0 +1,2 @@
+# PCW protocol v1, merged PR #4. Update deliberately after compatibility tests.
+pointcloud-workflows[ml] @ https://github.com/ajavanma/PointCloud-Workflows/archive/838cc59243a5b4772a260a7e783f3a8fafb27ace.tar.gz#sha256=1b738cebfbfe06e037384345f5c4b420e785f6962b033f104b92674c6b5d773c
