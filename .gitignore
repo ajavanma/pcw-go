@@ -3,3 +3,4 @@
 /roundtrip
 /work/
 /.venv/
+__pycache__/
