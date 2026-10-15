@@ -52,9 +52,25 @@ converted into a CPU run. Local POSIX locks do not provide distributed ownership
 - PCW separately tests legacy CLI payloads, artifact readers and historical
   training compatibility. The Go module does not replace those tests.
 
+## Service consumer
+
+The [HTTP service example](../examples/service/README.md) consumes the client
+without changing its API. One synchronous request owns a fresh artifact
+directory and a complete synthetic CPU workflow. A service-level admission
+limit covers the whole workflow; the client's process limit bounds individual
+commands. The request context carries cancellation and a deadline into each
+worker process.
+
+The service saves a successful JSON receipt before sending its HTTP response.
+This receipt is application metadata, separate from PCW's checksummed artifact
+and checkpoint contracts. A lost response can follow completed work. Retrying
+creates a new directory; the service has no retry, resume or idempotency policy.
+Retained partial artifacts require deliberate operator inspection and cleanup.
+
 ## Next steps
 
-1. Use the client in a real Go service before stabilizing a v1 API.
+1. Refine the service around a concrete consumer's data source, ownership and
+   retention needs before stabilizing a v1 API.
 2. Add a streaming log/progress interface only with an explicit framing contract.
 3. Consider a PDAL adapter if users need mixed processing stages.
 4. Add an optional container or Kubernetes runner after defining durable

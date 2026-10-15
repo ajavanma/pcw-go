@@ -31,6 +31,19 @@ The requirements file pins the exact PCW revision used by compatibility CI.
 An older PCW installation without protocol version 1 is not supported. The
 Python runtime remains required; building the Go program does not bundle it.
 
+## Run an HTTP workflow service
+
+The [service example](examples/service/README.md) embeds this client in a Go HTTP
+server. `POST /v1/workflows` runs a synthetic point-cloud workflow through CPU
+training, evaluation and prediction, saving each request's artifacts separately.
+It bounds concurrent workflows, propagates cancellation, and writes a successful
+result receipt before responding. The example includes HTTP behavior tests and
+a real Python worker integration test.
+
+Use it locally to learn the service boundary and adapt it to a concrete
+application. Its HTTP API is experimental; authentication, a durable job queue,
+artifact downloads and deployment are outside this example.
+
 ## Use the library
 
 Add the module to an existing Go project. Until a tagged release exists, pin a
@@ -110,11 +123,12 @@ go test -race ./...
 PCW_PYTHON=/absolute/path/to/python go test -race -count=1 ./...
 ```
 
-The first test command needs only Go; the real-worker test explicitly skips
+The first test command needs only Go; the real-worker tests explicitly skip
 unless `PCW_PYTHON` is set. CI sets it for Python 3.11 and 3.12, installing the
 pinned worker. Frozen real response fixtures also test decoder compatibility
 without Python. Go tests cover malformed responses, cancellation, descendant
-cleanup, output limits and concurrent callers.
+cleanup, output limits and concurrent callers. Service tests also cover HTTP
+validation, workflow admission, cancellation and saved result receipts.
 
 Changes go through PRs with required CI, CodeQL analysis, and branch protection
 enforced for administrators too. Squash titles are short and commit bodies are
