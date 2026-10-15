@@ -4,15 +4,16 @@ A Go client and local runner for [PointCloud Workflows](https://github.com/ajava
 Go manages execution; the installed Python worker owns point-cloud processing,
 CPU/GPU models, artifact validation and checkpoint compatibility.
 
-This repository is private. Its API is experimental and has no tagged release.
+This repository is public under the MIT license. Its API is experimental and has no tagged release.
 The local runner is tested on Linux and macOS with Go 1.25 and later.
 
 ## Start locally
 
-Clone this repository using your authenticated GitHub account. Install PCW in a
-separate Python 3.11 or 3.12 environment:
+Clone the public repository and install PCW in a separate Python 3.11 or 3.12 environment:
 
 ```sh
+git clone https://github.com/ajavanma/pcw-go.git
+cd pcw-go
 python3 -m venv .venv
 # On Linux, install the CPU PyTorch wheel before the requirements below:
 # .venv/bin/python -m pip install 'torch==2.13.0' --index-url https://download.pytorch.org/whl/cpu
@@ -32,9 +33,14 @@ Python runtime remains required; building the Go program does not bundle it.
 
 ## Use the library
 
-Private module consumers need authenticated Git access and
-`GOPRIVATE=github.com/ajavanma/pcw-go` in addition to any existing private patterns.
-Pin a reviewed commit until a module release exists.
+Add the module to an existing Go project. Until a tagged release exists, pin a
+reviewed commit; this revision contains the initial tested local runner:
+
+```sh
+go get github.com/ajavanma/pcw-go@b572e9bb1f772f00d699facf21e8c483f7a965b1
+```
+
+No GitHub authentication or `GOPRIVATE` entry is required for this public module.
 
 ```go
 client, err := pcw.NewClient(pcw.Config{
@@ -110,8 +116,10 @@ pinned worker. Frozen real response fixtures also test decoder compatibility
 without Python. Go tests cover malformed responses, cancellation, descendant
 cleanup, output limits and concurrent callers.
 
-Changes go through PRs and all CI jobs must pass before merge. GitHub currently
-requires a Pro upgrade to enforce branch protection on this private repository;
-[the intended rule](scripts/branch-protection.json) is checked in for activation
-when eligible. Squash titles are short and commit bodies are blank. There is no
+Changes go through PRs with required CI, CodeQL analysis, and branch protection
+enforced for administrators too. Squash titles are short and commit bodies are
+blank. See [contributing](CONTRIBUTING.md), [security reporting](SECURITY.md), and
+the [public repository controls](docs/public-readiness.md).
+
+Public source access does not create a versioned module release. There is no
 package, documentation or container publishing workflow.
