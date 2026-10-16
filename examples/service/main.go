@@ -1,4 +1,4 @@
-// service exposes a small synchronous HTTP API for a synthetic CPU workflow.
+// service exposes a small synchronous HTTP API for CPU point-cloud workflows.
 package main
 
 import (
@@ -27,6 +27,7 @@ func main() {
 func run() error {
 	listen := flag.String("listen", "127.0.0.1:8080", "HTTP listen address")
 	output := flag.String("output", "work/service", "private directory retaining workflow artifacts")
+	datasets := flag.String("datasets", "", "operator dataset registry JSON file (optional)")
 	executable := flag.String("pcw", "pcw", "PCW executable path")
 	python := flag.String("python", os.Getenv("PCW_PYTHON"), "Python interpreter with PCW installed (overrides -pcw)")
 	maxConcurrent := flag.Int("max-concurrent", 1, "maximum simultaneous workflows (no queue)")
@@ -49,7 +50,11 @@ func run() error {
 		return err
 	}
 	logger := log.New(os.Stderr, "pcw-service ", log.LstdFlags)
-	handler, err := newService(pcwWorkflow(client), *output, *maxConcurrent, *timeout, logger)
+	registry, err := loadDatasets(*datasets)
+	if err != nil {
+		return err
+	}
+	handler, err := newService(pcwWorkflow(client), *output, *maxConcurrent, *timeout, logger, registry)
 	if err != nil {
 		return err
 	}

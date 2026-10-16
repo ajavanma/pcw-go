@@ -23,6 +23,8 @@ const maxRequestBytes = 4 << 10
 type workflowInput struct {
 	Seed      uint32  `json:"seed"`
 	VoxelSize float64 `json:"voxel_size"`
+	DatasetID string  `json:"dataset_id,omitempty"`
+	source    *registeredDataset
 }
 
 type workflowSummary struct {
@@ -34,29 +36,51 @@ type workflowSummary struct {
 }
 
 type workflowReceipt struct {
-	WorkflowID string            `json:"workflow_id"`
-	Input      workflowInput     `json:"input"`
-	Artifacts  map[string]string `json:"artifacts"`
+	WorkflowID           string            `json:"workflow_id"`
+	Input                workflowInput     `json:"input"`
+	Artifacts            map[string]string `json:"artifacts"`
+	DatasetID            string            `json:"dataset_id,omitempty"`
+	SourceManifestSHA256 string            `json:"source_manifest_sha256,omitempty"`
 	workflowSummary
 }
 
 type workflowRunner func(context.Context, string, workflowInput) (workflowSummary, error)
 
 type service struct {
-	runner  workflowRunner
-	root    string
-	slots   chan struct{}
-	timeout time.Duration
-	logger  *log.Logger
+	runner   workflowRunner
+	root     string
+	slots    chan struct{}
+	timeout  time.Duration
+	logger   *log.Logger
+	datasets datasetRegistry
 }
 
-func newService(runner workflowRunner, root string, maxConcurrent int, timeout time.Duration, logger *log.Logger) (*service, error) {
+func newService(runner workflowRunner, root string, maxConcurrent int, timeout time.Duration, logger *log.Logger, registries ...datasetRegistry) (*service, error) {
 	if runner == nil || root == "" || maxConcurrent < 1 || timeout <= 0 {
 		return nil, errors.New("runner, output directory, positive concurrency and timeout are required")
 	}
-	absolute, err := filepath.Abs(root)
+	if len(registries) > 1 {
+		return nil, errors.New("at most one dataset registry is allowed")
+	}
+	absolute, err := canonicalPath(root)
 	if err != nil {
 		return nil, err
+	}
+	datasets := make(datasetRegistry)
+	if len(registries) == 1 {
+		for id, source := range registries[0] {
+			if id != source.ID {
+				return nil, errors.New("registry key must match dataset ID")
+			}
+			source, err = canonicalDataset(source)
+			if err != nil {
+				return nil, err
+			}
+			if err = source.verify(absolute); err != nil {
+				return nil, err
+			}
+			datasets[id] = source
+		}
 	}
 	if err = os.MkdirAll(absolute, 0700); err != nil {
 		return nil, err
@@ -71,7 +95,7 @@ func newService(runner workflowRunner, root string, maxConcurrent int, timeout t
 	if logger == nil {
 		logger = log.New(io.Discard, "", 0)
 	}
-	return &service{runner: runner, root: absolute, slots: make(chan struct{}, maxConcurrent), timeout: timeout, logger: logger}, nil
+	return &service{runner: runner, root: absolute, slots: make(chan struct{}, maxConcurrent), timeout: timeout, logger: logger, datasets: datasets}, nil
 }
 
 func (s *service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -139,8 +163,16 @@ func (s *service) runWorkflow(w http.ResponseWriter, r *http.Request) {
 	}
 	input, err := decodeInput(data)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "expected an object with optional seed and voxel_size", "")
+		writeError(w, http.StatusBadRequest, "expected an object with optional dataset_id, seed and voxel_size", "")
 		return
+	}
+	if input.DatasetID != "" {
+		source, exists := s.datasets[input.DatasetID]
+		if !exists {
+			writeError(w, http.StatusNotFound, "dataset is not registered", "")
+			return
+		}
+		input.source = &source
 	}
 	if err = ctx.Err(); err != nil {
 		s.workflowError(w, "", err)
@@ -159,6 +191,12 @@ func (s *service) runWorkflow(w http.ResponseWriter, r *http.Request) {
 		s.workflowError(w, "", err)
 		return
 	}
+	// Check before creating an artifact directory: an operator must not retarget
+	// output or source directory symlinks into one another while serving.
+	if err = s.checkOutputRoot(); err != nil {
+		s.workflowError(w, "", err)
+		return
+	}
 	directory, err := os.MkdirTemp(s.root, "workflow-")
 	if err != nil {
 		s.workflowError(w, "", err)
@@ -166,6 +204,12 @@ func (s *service) runWorkflow(w http.ResponseWriter, r *http.Request) {
 	}
 	id := filepath.Base(directory)
 	s.logger.Printf("workflow %s started", id)
+	if input.source != nil {
+		if err = input.source.verify(s.root); err != nil {
+			s.workflowError(w, id, err)
+			return
+		}
+	}
 	summary, err := s.runner(ctx, directory, input)
 	if err == nil {
 		err = ctx.Err()
@@ -175,10 +219,16 @@ func (s *service) runWorkflow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	artifacts := map[string]string{"result": path.Join(id, "result.json")}
-	for _, name := range []string{"raw", "prepared", "model", "evaluation", "predictions"} {
+	for _, name := range []string{"prepared", "model", "evaluation", "predictions"} {
 		artifacts[name] = path.Join(id, name)
 	}
 	receipt := workflowReceipt{WorkflowID: id, Input: input, Artifacts: artifacts, workflowSummary: summary}
+	if input.source == nil {
+		artifacts["raw"] = path.Join(id, "raw")
+	} else {
+		receipt.DatasetID = input.DatasetID
+		receipt.SourceManifestSHA256 = input.source.SHA256
+	}
 	response, err := json.Marshal(receipt)
 	if err == nil {
 		response = append(response, '\n')
@@ -191,6 +241,33 @@ func (s *service) runWorkflow(w http.ResponseWriter, r *http.Request) {
 	s.logger.Printf("workflow %s completed", id)
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(response)
+}
+
+func (s *service) checkOutputRoot() error {
+	output, err := canonicalPath(s.root)
+	if err != nil {
+		return err
+	}
+	if output != s.root {
+		return errors.New("output directory path changed")
+	}
+	info, err := os.Stat(output)
+	if err != nil {
+		return err
+	}
+	if !info.IsDir() || info.Mode().Perm()&0077 != 0 {
+		return errors.New("output must remain a private directory (mode 0700)")
+	}
+	for _, source := range s.datasets {
+		inputRoot, err := canonicalPath(filepath.Dir(source.Manifest))
+		if err != nil {
+			return err
+		}
+		if pathsOverlap(inputRoot, output) {
+			return errors.New("dataset and output directories must remain separate")
+		}
+	}
+	return nil
 }
 
 // Decode literal keys rather than encoding/json's case-insensitive struct
@@ -218,13 +295,18 @@ func decodeInput(data []byte) (workflowInput, error) {
 		seen[key] = true
 		var raw json.RawMessage
 		if err = decoder.Decode(&raw); err != nil || bytes.Equal(bytes.TrimSpace(raw), []byte("null")) {
-			return input, errors.New("expected a number")
+			return input, errors.New("expected a non-null value")
 		}
 		switch key {
 		case "seed":
 			err = json.Unmarshal(raw, &input.Seed)
 		case "voxel_size":
 			err = json.Unmarshal(raw, &input.VoxelSize)
+		case "dataset_id":
+			err = json.Unmarshal(raw, &input.DatasetID)
+			if err == nil && !datasetIDPattern.MatchString(input.DatasetID) {
+				err = errors.New("invalid dataset_id")
+			}
 		default:
 			return input, errors.New("unknown key")
 		}

@@ -34,11 +34,15 @@ Python runtime remains required; building the Go program does not bundle it.
 ## Run an HTTP workflow service
 
 The [service example](examples/service/README.md) embeds this client in a Go HTTP
-server. `POST /v1/workflows` runs a synthetic point-cloud workflow through CPU
+server. `POST /v1/workflows` runs a synthetic or registered point-cloud dataset through CPU
 training, evaluation and prediction, saving each request's artifacts separately.
 It bounds concurrent workflows, propagates cancellation, and writes a successful
 result receipt before responding. The example includes HTTP behavior tests and
 a real Python worker integration test.
+
+An operator-managed [dataset registry](examples/service/README.md#registered-datasets)
+lets callers select an existing raw dataset by ID. Input manifests are pinned by
+checksum, and Python validates their scene data. HTTP callers never supply paths.
 
 Use it locally to learn the service boundary and adapt it to a concrete
 application. Its HTTP API is experimental; authentication, a durable job queue,
