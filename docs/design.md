@@ -56,10 +56,23 @@ converted into a CPU run. Local POSIX locks do not provide distributed ownership
 
 The [HTTP service example](../examples/service/README.md) consumes the client
 without changing its API. One synchronous request owns a fresh artifact
-directory and a complete synthetic CPU workflow. A service-level admission
+directory and a complete CPU workflow. It uses either generated synthetic data
+or an operator-registered raw dataset selected by ID. A service-level admission
 limit covers the whole workflow; the client's process limit bounds individual
 commands. The request context carries cancellation and a deadline into each
 worker process.
+
+The registry is loaded at startup and maps IDs to canonical local manifest paths
+and SHA-256 pins. Source directories are separate from output storage. The service
+rechecks manifest identity around preprocessing and compares the prepared source
+hash before training. PCW remains responsible for scene checksums, formats,
+labels and point mappings. Registered data must have train, test and predict
+splits for this complete workflow; validation scenes are optional.
+
+The operator keeps input files immutable while workers use them. Hash checks
+detect drift, but do not provide a transactional filesystem snapshot. Inputs
+are neither copied into each workflow nor exposed as HTTP artifact references.
+Registry membership is an allowlist of inputs, not per-caller authorization.
 
 The service saves a successful JSON receipt before sending its HTTP response.
 This receipt is application metadata, separate from PCW's checksummed artifact
