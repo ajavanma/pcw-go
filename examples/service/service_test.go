@@ -191,6 +191,10 @@ func TestServiceRoutesDoNotStartWork(t *testing.T) {
 
 func TestServiceIsolatesOutputsAndPersistsReceipt(t *testing.T) {
 	root := privateRoot(t)
+	resolvedRoot, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		t.Fatal(err)
+	}
 	var directories []string
 	s := testService(t, func(_ context.Context, directory string, _ workflowInput) (workflowSummary, error) {
 		directories = append(directories, directory)
@@ -211,7 +215,7 @@ func TestServiceIsolatesOutputsAndPersistsReceipt(t *testing.T) {
 		}
 		previousID = receipt.WorkflowID
 		directory := directories[len(directories)-1]
-		if directory != filepath.Join(root, receipt.WorkflowID) {
+		if directory != filepath.Join(resolvedRoot, receipt.WorkflowID) {
 			t.Fatalf("worker directory %q does not match receipt %q", directory, receipt.WorkflowID)
 		}
 		info, err := os.Stat(directory)
