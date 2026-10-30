@@ -1,8 +1,8 @@
 """Preview or maintain the public pcw-go repository's GitHub controls.
 
 The default preview is entirely offline. --apply never changes visibility or
-publishes a release. Enable the CodeQL gate only after its setup run succeeds;
-add --include-python after these maintenance scripts have landed on main.
+publishes a release. CodeQL uses the checked-in advanced workflow for Actions,
+Go and Python. Disable default setup separately before applying these controls.
 """
 
 import argparse
@@ -15,6 +15,8 @@ import sys
 REPOSITORY = "ajavanma/pcw-go"
 REPOSITORY_ID = 1421181393
 BASE = f"repos/{REPOSITORY}"
+CODEQL_WORKFLOW_PATH = ".github/workflows/codeql.yml"
+CODEQL_LANGUAGES = ["actions", "go", "python"]
 TAG_RULESET = {
     "name": "Immutable version tags",
     "target": "tag",
@@ -165,38 +167,28 @@ def ensure_ruleset(desired):
     verify(api("GET", endpoint), desired, desired["name"])
 
 
-def configure_codeql(include_python):
-    endpoint = f"{BASE}/code-scanning/default-setup"
-    observed = api("GET", endpoint)
-    # Do not disable Python scanning on later invocations without the flag.
-    languages = {"actions", "go"} | set(observed.get("languages", []))
-    if include_python:
-        languages.add("python")
-    desired = {"state": "configured", "query_suite": "default", "languages": sorted(languages)}
-    if matches(observed, desired):
-        return observed, False
-    result = api("PATCH", endpoint, desired)
-    print(f"CodeQL setup requested: {json.dumps(result)}")
-    print("Wait for the setup run to succeed before requiring CodeQL; rerun to verify configuration.")
-    return desired, True
+def verify_advanced_codeql():
+    setup = api("GET", f"{BASE}/code-scanning/default-setup")
+    verify(setup, {"state": "not-configured"},
+           "CodeQL default setup disabled before using the advanced workflow")
+    workflow = api("GET", f"{BASE}/actions/workflows/codeql.yml")
+    verify(workflow, {"path": CODEQL_WORKFLOW_PATH, "state": "active"},
+           "active checked-in CodeQL workflow")
+    return workflow
 
 
-def verify_codeql_run(run_id, setup):
-    verify(setup, {"state": "configured"}, "configured CodeQL default setup")
-    languages = setup.get("languages")
-    if not isinstance(languages, list) or not {"actions", "go"}.issubset(languages):
-        raise RuntimeError("CodeQL setup must include GitHub Actions and Go")
+def verify_codeql_run(run_id, workflow):
+    verify(workflow, {"path": CODEQL_WORKFLOW_PATH, "state": "active"},
+           "active checked-in CodeQL workflow")
     run = api("GET", f"{BASE}/actions/runs/{run_id}")
     main_sha = api("GET", f"{BASE}/branches/main")["commit"]["sha"]
     verify(run, {
         "repository": {"id": REPOSITORY_ID, "full_name": REPOSITORY},
+        "workflow_id": workflow["id"], "path": CODEQL_WORKFLOW_PATH,
         "head_branch": "main", "head_sha": main_sha,
         "status": "completed", "conclusion": "success",
     }, "successful CodeQL run on current main")
-    if not run.get("path", "").startswith("dynamic/github-code-scanning/codeql"):
-        raise RuntimeError("The supplied run must be GitHub's default CodeQL workflow")
-    # Setup updated_at can be later than its successful validation run. Verify
-    # actual language coverage instead of inferring it from those timestamps.
+    # Verify actual language coverage, including every page of matrix jobs.
     jobs = []
     page = 1
     while True:
@@ -205,7 +197,7 @@ def verify_codeql_run(run_id, setup):
         if len(batch) < 100:
             break
         page += 1
-    for language in languages:
+    for language in CODEQL_LANGUAGES:
         analyses = [job for job in jobs if job.get("name") == f"Analyze ({language})"]
         if not analyses or any(
             job.get("status") != "completed" or job.get("conclusion") != "success"
@@ -217,9 +209,9 @@ def verify_codeql_run(run_id, setup):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--apply", action="store_true", help="Apply to the already-public repository.")
-    parser.add_argument("--include-python", action="store_true", help="Add Python scanning after scripts land on main.")
+    parser.add_argument("--include-python", action="store_true", help="Accepted for compatibility; Actions, Go and Python are always required.")
     parser.add_argument("--require-codeql", action="store_true", help="Enable the CodeQL merge gate after a successful baseline.")
-    parser.add_argument("--codeql-run-id", type=int, help="Successful default CodeQL run on current main, used with --require-codeql.")
+    parser.add_argument("--codeql-run-id", type=int, help="Successful advanced CodeQL run on current main, used with --require-codeql.")
     arguments = parser.parse_args(argv)
     if arguments.codeql_run_id is not None and arguments.codeql_run_id <= 0:
         parser.error("--codeql-run-id must be positive")
@@ -235,30 +227,29 @@ def main(argv=None):
             "operations": [{"method": method, "endpoint": endpoint, "payload": payload}
                            for method, endpoint, payload in operations],
             "named_rulesets": [TAG_RULESET] + ([CODEQL_RULESET] if arguments.require_codeql else []),
-            "codeql_default_setup": {
-                "state": "configured", "query_suite": "default",
-                "languages": ["actions", "go"] + (["python"] if arguments.include_python else []),
-                "preserve_existing_languages": True,
+            "codeql": {
+                "mode": "advanced", "workflow_path": CODEQL_WORKFLOW_PATH,
+                "workflow_state": "active", "default_setup_state": "not-configured",
+                "languages": CODEQL_LANGUAGES, "configuration_action": "verify only",
             },
-            "codeql_gate": "Requires a successful run on current main after default setup completes.",
+            "codeql_gate": "Requires a successful advanced workflow run on current main covering all three languages.",
         }, indent=2))
         return
 
     guard_repository(api("GET", BASE))
+    workflow = verify_advanced_codeql()
+    if arguments.require_codeql:
+        verify_codeql_run(arguments.codeql_run_id, workflow)
     for method, endpoint, payload in operations:
         api(method, endpoint, payload)
         print(f"Applied {method} {endpoint}")
     verify_baseline(protection)
     ensure_ruleset(TAG_RULESET)
-    setup, pending = configure_codeql(arguments.include_python)
     if arguments.require_codeql:
-        if pending:
-            raise RuntimeError("CodeQL setup changed; wait for its run before enabling the gate")
-        verify_codeql_run(arguments.codeql_run_id, setup)
         ensure_ruleset(CODEQL_RULESET)
     print("Verified baseline repository controls and immutable version tags.")
-    if not pending:
-        print("Verified CodeQL default setup." + (" Verified CodeQL merge gate." if arguments.require_codeql else ""))
+    print("Verified active CodeQL advanced workflow and disabled default setup."
+          + (" Verified CodeQL merge gate." if arguments.require_codeql else ""))
 
 
 if __name__ == "__main__":

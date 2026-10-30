@@ -46,7 +46,6 @@ Without `--apply`, it prints an offline preview and sends no requests:
 
 ```sh
 python3 scripts/apply-public-settings.py
-python3 scripts/apply-public-settings.py --apply
 ```
 
 The helper checks repository ID `1421181393` and `ajavanma/pcw-go`. It refuses an
@@ -55,11 +54,36 @@ admin permission. It does not change visibility or
 publish software. It preserves unrelated rulesets and reads applied settings
 back to detect drift.
 
-After the initial CodeQL setup completes successfully, enforce its merge gate
-with `--apply --require-codeql --codeql-run-id RUN_ID`, replacing `RUN_ID` with
-the successful default CodeQL run on current main. Once the Python maintenance
-script is on main, use `--apply --include-python` to cover Go, GitHub Actions and Python. Verify that
-the resulting analysis completes before treating the new language as covered.
+### CodeQL advanced workflow
+
+The checked-in [CodeQL workflow](../.github/workflows/codeql.yml) defines analysis
+for GitHub Actions, Go and Python. GitHub default setup must be disabled before
+the advanced workflow uploads results; enabling both blocks advanced uploads.
+The helper verifies default setup is `not-configured` and the workflow at
+`.github/workflows/codeql.yml` is active before changing any repository settings.
+It does not enable or disable either CodeQL setup mode.
+
+For the migration, prepare and review the advanced workflow through a PR, then
+have a maintainer disable default setup once in the repository's code security
+settings before advanced analysis runs. Preserve the existing merge gate,
+required CI checks and read-only workflow token default. After the workflow
+lands, run its analysis on current main and verify successful `Analyze (actions)`,
+`Analyze (go)` and `Analyze (python)` jobs.
+
+Once those prerequisites hold, maintain the baseline controls with `--apply`.
+To also verify and maintain the CodeQL merge gate, supply the successful advanced
+workflow run on current main:
+
+```sh
+python3 scripts/apply-public-settings.py --apply
+python3 scripts/apply-public-settings.py --apply --require-codeql --codeql-run-id RUN_ID
+```
+
+Replace `RUN_ID` with that run's numeric ID. The helper rejects default-setup or
+unrelated workflow runs, another repository, a stale main commit, and missing or
+unsuccessful analysis jobs for any of the three languages. `--include-python`
+remains accepted for older commands; Python is now always included in the
+expected coverage, whether the flag is present or absent.
 
 Source visibility, enforced settings, completed CI and a versioned release are
 separate facts. A successful Go module fetch from a commit does not constitute a
